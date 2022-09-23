@@ -1,6 +1,6 @@
 # Create this project (Spring Config)
 
-These are the steps to create a simple project for a Spring Cloud
+These are the steps to create a simple project for a Spring Config
 
 ## Gradle configuration
 
@@ -12,15 +12,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.cloud:spring-cloud-config-server'
 	implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-}
-```
-```gradle
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
 }
 ```
 
@@ -88,7 +79,7 @@ And we get the configuration for the *microservice* **product-service** in the p
 
 ## Setting in each microservice
 
-In build.gradle, add this dependency
+In build.gradle, add these dependencies
 ```gradle
 implementation 'org.springframework.cloud:spring-cloud-starter-config'
 implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
