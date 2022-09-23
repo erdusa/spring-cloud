@@ -91,6 +91,7 @@ And we get the configuration for the *microservice* **product-service** in the p
 In build.gradle, add this dependency
 ```gradle
 implementation 'org.springframework.cloud:spring-cloud-starter-config'
+implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
 ```
 In resources, we change **application.properties** to **bootstrap.yml** and delete all content and put this content
 
