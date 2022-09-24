@@ -1,13 +1,20 @@
 package com.cloud.shopping.service;
 
+import com.cloud.shopping.client.CustomerClient;
+import com.cloud.shopping.client.ProductCliente;
 import com.cloud.shopping.entity.Invoice;
+import com.cloud.shopping.entity.InvoiceItem;
+import com.cloud.shopping.model.Customer;
+import com.cloud.shopping.model.Product;
 import com.cloud.shopping.repository.InvoiceItemsRepository;
 import com.cloud.shopping.repository.InvoiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -18,6 +25,12 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Autowired
     InvoiceItemsRepository invoiceItemsRepository;
+
+    @Autowired
+    CustomerClient customerClient;
+
+    @Autowired
+    ProductCliente productCliente;
 
     @Override
     public List<Invoice> findInvoiceAll() {
@@ -32,7 +45,13 @@ public class InvoiceServiceImpl implements InvoiceService {
             return invoiceDB;
         }
         invoice.setState("CREATED");
-        return invoiceRepository.save(invoice);
+        invoiceDB = invoiceRepository.save(invoice);
+        invoiceDB.getItems().forEach(invoiceItem -> {
+            double quantity = invoiceItem.getQuantity() * -1;
+            productCliente.updateStockProduct(invoiceItem.getProductId(), quantity);
+        });
+
+        return invoiceDB;
     }
 
 
@@ -63,6 +82,31 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public Invoice getInvoice(Long id) {
-        return invoiceRepository.findById(id).orElse(null);
+        Invoice invoice = invoiceRepository.findById(id).orElse(null);
+        if (invoice != null) {
+            Customer customer = customerClient.getCustomer(invoice.getCustomerId()).getBody();
+            invoice.setCustomer(customer);
+
+/*
+            List<InvoiceItem> listItems = invoice.getItems().stream().map(invoiceItem -> {
+                Product product = productCliente.getProduct(invoiceItem.getProductId()).getBody();
+                invoiceItem.setProduct(product);
+                return invoiceItem;
+            }).collect(Collectors.toList());
+            invoice.setItems(listItems);
+*/
+
+            List<InvoiceItem> listNewItems = new ArrayList<>();
+            invoice.getItems().forEach(invoiceItem -> {
+                Product product = productCliente.getProduct(invoiceItem.getProductId()).getBody();
+                invoiceItem.setProduct(product);
+                listNewItems.add(invoiceItem);
+            });
+            System.out.printf("****************");
+            listNewItems.forEach(System.out::println);
+            System.out.println("tamanio "+listNewItems.size());
+            invoice.setItems(listNewItems);
+        }
+        return invoice;
     }
 }
