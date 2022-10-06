@@ -45,6 +45,8 @@ eureka:
 feign:
   hystrix:
     enabled: true
+  circuitbreaker:
+    enabled: true
 management:
   endpoints:
     web:
