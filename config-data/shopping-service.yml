@@ -43,12 +43,6 @@ eureka:
             defaultZone: http://localhost:8099/eureka
 
 feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: basic
   hystrix:
     enabled: true
 management:
