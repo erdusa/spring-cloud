@@ -1,13 +1,11 @@
-# Create this project (Eureka Server)
-* Server for register and localization microservice instances
-* Each microservice instance (Eureka Client) notifies "heartbeats" every 30s
-* Each microservice has a copy cached of Eureka registry
-* Works in cluster mode
-* Self-prevention mode
+# Create this project (Gateway Server)
+* Give one  gateway to all microservices in our system
+* Dynamic routing, monitoring and security
+* Load filters in hot
 
-These are the steps to create a simple project for a Eureka Server
+These are the steps to create a simple project for a Gateway Server
 
->IMPORTANT: First you have to have created the Config Server
+>IMPORTANT: First you have to have created the Config Server and Eureka Server
 
 ## Gradle configuration
 
@@ -16,43 +14,60 @@ Add these libraries in **build.gradle**
 ```gradle
 dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+	implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
 }
 ```
 
 ## Annotations
 
-Annotating the main class with **@EnableEurekaServer**
+Annotating the main class with **@EnableEurekaClient** for looking for Eureka
 
 ```java
-@EnableEurekaServer
 @SpringBootApplication
-public class RegistryServiceApplication {
+@EnableEurekaClient
+public class GatewayServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(RegistryServiceApplication.class, args);
+        SpringApplication.run(GatewayServiceApplication.class, args);
     }
 
 }
 ```
 ## Properties configuration
 
-Create the file **registry-service.yml** in folder that contains all files configuration where **Config Server** can read it. 
+Create the file **gateway-service.yml** in folder that contains all files configuration where **Config Server** can read it. 
 
 And put the follow configuration
 ```yml
 server:
-  port: 8099
+  port: 8080
 
 eureka:
-  instance:
-    hostname: localhost
   client:
-    registerWithEureka: false
-    fetchRegistry: false
     serviceUrl:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+      defaultZone: http://localhost:8099/eureka/
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enable: true
+      routes:
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+            - Path=/customers/**
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/products/**
+        - id: shopping-service
+          uri: lb://shopping-service
+          predicates:
+            - Path=/invoices/**
   ```
 In resources, we change **application.properties** to **bootstrap.yml**
 
@@ -66,39 +81,3 @@ spring:
       username: root
       password: s3cr3t
 ```
-
-For testing the Eureka Service, we must put this url in a browser
-
-```link
-http://localhost:8099
-```
-## Setting in each microservice
-
-In build.gradle, add this dependency
-```gradle
-implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-```
-
-Now, annotate the main class with **@EnableEurekaClient**
-```java
-@EnableEurekaClient
-@SpringBootApplication
-public class CustomerServiceApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(CustomerServiceApplication.class, args);
-    }
-
-}
-```
-
-Finally, in *config file* (read it for Config Server) add the follow:
-
-```yml
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8099/eureka
-```
-
-Now, when we run our microservice, it registers itself into Eureka Server
