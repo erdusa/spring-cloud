@@ -102,3 +102,81 @@ public Invoice getInvoice(Long id) {
 }
 ```
 
+# Configure Hystrix
+
+## Gradle configuration
+
+Add feign library in **build.gradle**
+
+```gradle
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix-dashboard'
+}
+```
+
+## Annotations
+
+We annotate the main class with @EnableHystrix and @EnableHystrixDashboard
+```java
+@EnableFeignClients
+@EnableEurekaClient
+@SpringBootApplication
+@EnableHystrix
+@EnableHystrixDashboard
+public class ShoppingServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ShoppingServiceApplication.class, args);
+    }
+}
+```
+
+## Configuration Properties
+
+In our configuration property file (file in config server), we add this:
+
+```yml
+feign:
+  hystrix:
+    enabled: true
+  circuitbreaker:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+The management configuration is for "actuator"
+
+## Create class fallback
+
+```java
+@Component
+public class CustomerHystrixCallbackFactory implements CustomerClient{
+
+    @Override
+    public ResponseEntity<Customer> getCustomer(long id) {
+        Customer customer = Customer.builder()
+                .firstName("none")
+                .lastName("none")
+                .email("none")
+                .photoUrl("none").build();
+        return ResponseEntity.ok(customer);
+    }
+}
+```
+
+And set up the fallback value for @FeignClient
+```java
+@FeignClient(value = "CUSTOMER-SERVICE", path = "/customers", fallback = CustomerHystrixCallbackFactory.class)
+public interface CustomerClient {
+    @GetMapping(value = "/{id}")
+    ResponseEntity<Customer> getCustomer(@PathVariable("id") long id);
+}
+```
+
+We go to the browser and open the next url http://localhost:8093/hystrix for enter to hystrix dashboard
+
+In the URL request in this page, we put http://localhost:8093/actuator/hystrix.stream and click on Monitor Stream
