@@ -81,3 +81,14 @@ spring:
       username: root
       password: s3cr3t
 ```
+
+# Enable Sleuth
+
+We must enable Sleuth in all microservice and in gateway service in order to get a identifier for tracing request made 
+to each microservice.
+
+```gradle
+dependencies {
+	implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+}
+```
