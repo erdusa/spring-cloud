@@ -74,7 +74,7 @@ In resources, we change **application.properties** to **bootstrap.yml**
 ```yml
 spring:
   application:
-    name: registry-service
+    name: gateway-service
   cloud:
     config:
       uri: http://localhost:8081
